@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+app/renderer/dist/
+app/renderer/vendor/
+app/renderer/icon.png
+examples/src/
+.claude/
+.github/workflows/
+scripts/symlink-shim.js
+*.log

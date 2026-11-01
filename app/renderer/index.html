@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob: mediastream:; connect-src 'self' blob: data:; frame-src blob:; object-src blob:; worker-src 'self' blob:">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MPage</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<!--
+  Text: data-i18n (text), data-i18n-html (markup), data-i18n-title, data-i18n-ph (placeholder).
+  Icons: <i data-icon="…"> is replaced with an SVG at startup (src/icons.js).
+-->
+<body>
+  <div id="app">
+    <!-- Left: sessions -->
+    <aside id="sessions">
+      <div class="side-head">
+        <img src="icon.png" alt="">
+        <div><b>MPage</b><small id="doc-title"></small></div>
+      </div>
+      <ul id="session-list" data-scroll></ul>
+      <button id="btn-new-session" class="ghost"><i data-icon="plus"></i><span data-i18n="common.session"></span></button>
+    </aside>
+
+    <!-- Center: stage (sector stack + files) -->
+    <main id="stage">
+      <canvas id="stack"></canvas>
+      <div id="labels"></div>
+      <div id="code-chip" hidden></div>
+      <div id="stage-hint"></div>
+
+      <section id="files" hidden>
+        <header>
+          <div class="crumbs"><span id="crumb-session"></span> / <b id="crumb-sector"></b> <i id="crumb-level"></i></div>
+          <div class="tools">
+            <button id="btn-new-text" data-i18n-title="files.newTextTitle"><i data-icon="filePlus"></i><span data-i18n="files.newText"></span></button>
+            <button id="btn-add-files" data-i18n-title="files.addTitle"><i data-icon="plus"></i><span data-i18n="files.add"></span></button>
+            <button id="btn-close-sector" class="icon-btn" data-i18n-title="common.close"><i data-icon="x"></i></button>
+          </div>
+        </header>
+        <div id="file-grid" data-scroll></div>
+      </section>
+
+      <section id="preview" hidden>
+        <header>
+          <div class="pv-title"><b id="pv-name"></b><small id="pv-meta"></small></div>
+          <div class="tools">
+            <button id="pv-prev" class="icon-btn" data-i18n-title="pv.prev"><i data-icon="chevronLeft"></i></button>
+            <span id="pv-pos"></span>
+            <button id="pv-next" class="icon-btn" data-i18n-title="pv.next"><i data-icon="chevronRight"></i></button>
+            <button id="pv-edit" data-i18n-title="pv.editTitle" hidden><i data-icon="pencil"></i><span data-i18n="pv.edit"></span></button>
+            <button id="pv-replace" data-i18n-title="pv.replaceTitle"><i data-icon="refresh"></i><span data-i18n="pv.replace"></span></button>
+            <button id="pv-export" data-i18n-title="pv.exportTitle"><i data-icon="download"></i><span data-i18n="pv.export"></span></button>
+            <button id="pv-delete" class="icon-btn" data-i18n-title="pv.delete"><i data-icon="trash"></i></button>
+            <button id="pv-close" class="icon-btn" data-i18n-title="common.close"><i data-icon="x"></i></button>
+          </div>
+        </header>
+        <div id="pv-body"></div>
+      </section>
+
+      <section id="locked" hidden>
+        <form class="card" id="unlock-form" autocomplete="off">
+          <div class="big-lock"><i data-icon="lock"></i></div>
+          <h2 id="lock-title"></h2>
+          <p id="lock-text"></p>
+          <div class="unlock-row">
+            <input type="password" id="unlock-pw" data-i18n-ph="lock.placeholder" autocomplete="off" spellcheck="false">
+            <button type="button" id="btn-kbd" class="icon-btn" data-i18n-title="lock.kbdTitle"><i data-icon="keyboard"></i></button>
+          </div>
+          <small id="unlock-count"></small>
+          <div id="vkbd" hidden></div>
+          <button type="submit" class="primary" id="unlock-go"><i data-icon="unlock"></i><span id="unlock-go-text" data-i18n="lock.unlock"></span></button>
+          <p id="unlock-wait" class="err"></p>
+          <p class="hint" data-i18n="lock.hint"></p>
+        </form>
+      </section>
+
+      <section id="welcome">
+        <div class="card">
+          <img src="icon.png" alt="" class="logo">
+          <h1>MPage</h1>
+          <p data-i18n-html="welcome.tagline"></p>
+          <div class="actions">
+            <button id="w-open" class="primary"><i data-icon="folderOpen"></i><span data-i18n="welcome.open"></span></button>
+            <button id="w-example"><i data-icon="layers"></i><span data-i18n="welcome.example"></span></button>
+            <button id="w-new"><i data-icon="plus"></i><span data-i18n="welcome.new"></span></button>
+          </div>
+          <p class="hint" data-i18n="welcome.hint"></p>
+          <div class="lang-switch welcome-lang" data-lang-switch></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Right: system panel -->
+    <aside id="systems">
+      <div class="sys-title" data-i18n="sys.title"></div>
+      <button class="sys" id="btn-open"><i data-icon="folderOpen"></i><span data-i18n="sys.open"></span></button>
+      <button class="sys" id="btn-save"><i data-icon="save"></i><span data-i18n="sys.save"></span></button>
+      <button class="sys" id="btn-save-as"><i data-icon="saveAs"></i><span data-i18n="sys.saveAs"></span></button>
+      <div class="sys-sep"></div>
+      <button class="sys" id="btn-new-sector"><i data-icon="layersPlus"></i><span data-i18n="sys.newSector"></span></button>
+      <button class="sys" id="btn-edit-sector"><i data-icon="layersEdit"></i><span data-i18n="sys.editSector"></span></button>
+      <button class="sys" id="btn-del-sector"><i data-icon="layersX"></i><span data-i18n="sys.delSector"></span></button>
+      <button class="sys" id="btn-edit-session"><i data-icon="serverEdit"></i><span data-i18n="sys.editSession"></span></button>
+      <button class="sys" id="btn-del-session"><i data-icon="serverX"></i><span data-i18n="sys.delSession"></span></button>
+      <div class="sys-sep"></div>
+      <button class="sys" id="btn-access"><i data-icon="key"></i><span><span data-i18n="sys.access"></span><small id="access-state"></small></span></button>
+      <button class="sys" id="btn-lock" hidden><i data-icon="lock"></i><span data-i18n="sys.lockAll"></span></button>
+      <div class="sys-sep"></div>
+      <button class="sys" id="btn-cam"><i data-icon="hand"></i><span data-i18n="sys.hand"></span></button>
+      <button class="sys" id="btn-calib"><i data-icon="sliders"></i><span data-i18n="sys.calib"></span></button>
+      <button class="sys" id="btn-help"><i data-icon="help"></i><span data-i18n="sys.help"></span></button>
+      <div id="cam" hidden>
+        <video id="cam-video" playsinline muted></video>
+        <canvas id="cam-overlay"></canvas>
+        <span id="cam-status"></span>
+      </div>
+      <div id="gesture"></div>
+      <div class="grow"></div>
+      <div class="lang-switch" data-lang-switch></div>
+    </aside>
+  </div>
+
+  <div class="hand-cursor" id="cursor-left" hidden></div>
+  <div class="hand-cursor" id="cursor-right" hidden></div>
+
+  <aside id="calib" hidden>
+    <header>
+      <b data-i18n="calib.title"></b>
+      <button id="calib-close" class="icon-btn" data-i18n-title="common.close"><i data-icon="x"></i></button>
+    </header>
+    <div class="live">
+      <div class="row"><span data-i18n="calib.state"></span><b id="cv-gesture">–</b></div>
+      <div class="row"><span data-i18n="calib.pinch"></span><b id="cv-pinch">–</b></div>
+      <div class="meter" id="m-pinch"><i></i><b class="on" data-i18n-title="calib.start"></b><b class="off" data-i18n-title="calib.end"></b></div>
+      <div class="row"><span data-i18n="calib.fingers"></span><b id="cv-fingers">–</b></div>
+      <div class="row"><span data-i18n="calib.swipe"></span><b id="cv-swipe">–</b></div>
+      <div class="meter" id="m-swipe-x"><i></i><b class="on"></b></div>
+      <div class="meter" id="m-swipe-y"><i></i><b class="on"></b></div>
+      <p class="tip" data-i18n-html="calib.tip"></p>
+    </div>
+    <div id="calib-params"></div>
+    <pre id="calib-log"></pre>
+    <footer>
+      <button id="calib-reset" data-i18n="calib.reset"></button>
+      <button id="calib-copy" class="primary" data-i18n="calib.copy"></button>
+    </footer>
+  </aside>
+
+  <div id="access" class="overlay" hidden>
+    <div class="card wide">
+      <button id="access-close" class="close icon-btn" data-i18n-title="common.close"><i data-icon="x"></i></button>
+      <h2 class="with-icon"><i data-icon="key"></i><span data-i18n="access.title"></span></h2>
+      <p class="muted" data-i18n-html="access.intro"></p>
+      <div id="access-body"></div>
+      <div class="modal-actions">
+        <button id="access-lock"><i data-icon="lock"></i><span data-i18n="access.lock"></span></button>
+        <button id="access-recovery" data-i18n-title="access.recoveryTitle"><i data-icon="lifebuoy"></i><span data-i18n="access.recovery"></span></button>
+        <button id="access-new" class="primary"><i data-icon="plus"></i><span data-i18n="access.new"></span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pw-dialog" class="overlay" hidden>
+    <form class="card wide" id="pw-form" autocomplete="off">
+      <h3 id="pw-title"></h3>
+      <label data-i18n="pw.password"></label>
+      <div class="pw-row">
+        <input type="password" id="pw-1" autocomplete="new-password" spellcheck="false">
+        <button type="button" id="pw-show" class="icon-btn" data-i18n-title="pw.show"><i data-icon="eye"></i></button>
+        <button type="button" id="pw-gen" data-i18n-title="pw.genTitle"><i data-icon="shuffle"></i><span data-i18n="pw.gen"></span></button>
+      </div>
+      <div id="pw-strength"><i></i></div>
+      <small id="pw-strength-text"></small>
+      <label data-i18n="pw.repeat"></label>
+      <input type="password" id="pw-2" autocomplete="new-password" spellcheck="false">
+      <small id="pw-match" class="err"></small>
+      <div id="pw-grants">
+        <label data-i18n="pw.grants"></label>
+        <div id="pw-sessions"></div>
+      </div>
+      <p class="warn"><i data-icon="alert"></i><span data-i18n="pw.warn"></span></p>
+      <div class="modal-actions">
+        <button type="button" id="pw-cancel" data-i18n="common.cancel"></button>
+        <button type="submit" class="primary" id="pw-save"></button>
+      </div>
+    </form>
+  </div>
+
+  <div id="recovery" class="overlay" hidden>
+    <div class="card wide">
+      <h2 class="with-icon"><i data-icon="lifebuoy"></i><span data-i18n="rec.title"></span></h2>
+      <p class="muted" data-i18n-html="rec.text"></p>
+      <div id="recovery-code"></div>
+      <div class="modal-actions" style="justify-content: space-between">
+        <button id="recovery-copy" data-i18n="rec.copy"></button>
+        <span>
+          <label class="chk inline"><input type="checkbox" id="recovery-ack"> <span data-i18n="rec.ack"></span></label>
+          <button id="recovery-done" class="primary" data-i18n="rec.done" disabled></button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" hidden>
+    <form class="card" id="modal-form">
+      <h3 id="modal-title"></h3>
+      <div id="modal-fields"></div>
+      <div class="modal-actions">
+        <button type="button" id="modal-cancel" data-i18n="common.cancel"></button>
+        <button type="submit" class="primary" data-i18n="common.ok"></button>
+      </div>
+    </form>
+  </div>
+
+  <div id="help" hidden>
+    <div class="card">
+      <button id="help-close" class="close icon-btn" data-i18n-title="common.close"><i data-icon="x"></i></button>
+      <h2 data-i18n="help.title"></h2>
+      <div class="cols">
+        <div>
+          <h3 class="with-icon"><i data-icon="hand"></i><span data-i18n="help.hand"></span></h3>
+          <ul>
+            <li data-i18n-html="help.h1"></li>
+            <li data-i18n-html="help.h2"></li>
+            <li data-i18n-html="help.h3"></li>
+            <li data-i18n-html="help.h4"></li>
+            <li data-i18n-html="help.h5"></li>
+            <li data-i18n-html="help.h6"></li>
+            <li data-i18n-html="help.h7"></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="with-icon"><i data-icon="keyboard"></i><span data-i18n="help.kbd"></span></h3>
+          <ul>
+            <li data-i18n-html="help.k1"></li>
+            <li data-i18n-html="help.k2"></li>
+            <li data-i18n-html="help.k3"></li>
+            <li data-i18n-html="help.k4"></li>
+            <li data-i18n-html="help.k5"></li>
+            <li data-i18n-html="help.k6"></li>
+            <li data-i18n-html="help.k7"></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <div id="drop"><div><span data-i18n="drop.title"></span><br><small data-i18n="drop.sub"></small></div></div>
+
+  <script src="dist/bundle.js"></script>
+</body>
+</html>

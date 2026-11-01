@@ -1,0 +1,123 @@
+{
+  "name": "mpage-viewer",
+  "productName": "MPage",
+  "version": "2.1.0",
+  "description": "File manager for .mpage archives: any files ordered as Session / Sector / File in one file, with password encryption, a 3D sector view and hand-gesture control.",
+  "author": {
+    "name": "Axmadjon Qaxxorov",
+    "url": "https://qaxxorov.uz"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/qaxxorovxd/mpage#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qaxxorovxd/mpage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/qaxxorovxd/mpage/issues"
+  },
+  "keywords": [
+    "mpage",
+    "archive",
+    "file-manager",
+    "encryption",
+    "argon2",
+    "aes-gcm",
+    "electron",
+    "threejs",
+    "mediapipe",
+    "hand-tracking",
+    "gesture-control"
+  ],
+  "desktopName": "mpage-viewer.desktop",
+  "main": "app/main.js",
+  "bin": {
+    "mpage": "cli/mpage.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:renderer": "node scripts/build-renderer.js",
+    "fetch:model": "node scripts/fetch-model.js",
+    "icons": "node scripts/make-icons.js",
+    "example": "node scripts/make-example.js",
+    "prepare:all": "npm run icons && npm run fetch:model && node scripts/build-renderer.js --minify && npm run example",
+    "start": "npm run build:renderer && electron .",
+    "dev": "node scripts/serve-web.js",
+    "test": "node --test \"test/*.test.js\"",
+    "dist:win": "npm run prepare:all && electron-builder --win nsis --x64 --publish never",
+    "dist:linux": "npm run prepare:all && node scripts/build-linux.js",
+    "dist:deb": "npm run prepare:all && node scripts/build-deb.js",
+    "dist:appimage": "npm run prepare:all && node scripts/build-appimage.js",
+    "dist": "npm run dist:win && node scripts/build-linux.js"
+  },
+  "build": {
+    "appId": "uz.mpage.viewer",
+    "productName": "MPage",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "app/**/*",
+      "lib/**/*",
+      "cli/**/*",
+      "package.json",
+      "!app/renderer/src/**",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "examples",
+        "to": "examples",
+        "filter": [
+          "*.mpage"
+        ]
+      }
+    ],
+    "fileAssociations": [
+      {
+        "ext": "mpage",
+        "name": "MPage Archive",
+        "description": "MPage archive (Session / Sector / File)",
+        "mimeType": "application/x-mpage",
+        "icon": "mpage-file",
+        "role": "Editor"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "multiLanguageInstaller": true,
+      "installerLanguages": [
+        "en_US",
+        "ru_RU",
+        "uz_UZ"
+      ],
+      "warningsAsErrors": false,
+      "artifactName": "MPage-Setup-${version}.exe"
+    },
+    "copyright": "Copyright (c) 2026 Axmadjon Qaxxorov"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "hash-wasm": "^4.12.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "@mediapipe/tasks-vision": "^1.2.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "electron": "^45.2.1",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
+    "tar-stream": "^3.2.2",
+    "three": "^0.187.0"
+  }
+}
